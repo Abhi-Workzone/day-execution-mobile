@@ -19,6 +19,8 @@ const TodoScreen = () => {
   const [activeTab, setActiveTab] = useState('active');
   const [filterMonth, setFilterMonth] = useState(new Date().getMonth());
   const [filterYear, setFilterYear] = useState(new Date().getFullYear());
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [showYearPicker, setShowYearPicker] = useState(false);
 
   const [newTask, setNewTask] = useState({
     title: '',
@@ -151,29 +153,22 @@ const TodoScreen = () => {
               <Text style={styles.filterLabel}>Month:</Text>
               <TouchableOpacity
                 style={styles.filterButton}
-                onPress={() => {
-                  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                  const nextMonth = (filterMonth + 1) % 12;
-                  setFilterMonth(nextMonth);
-                }}
+                onPress={() => setShowMonthPicker(true)}
               >
                 <Text style={styles.filterText}>
-                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][filterMonth]}
+                  {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][filterMonth]}
                 </Text>
+                <Ionicons name="chevron-down" size={14} color="#6B7280" />
               </TouchableOpacity>
             </View>
             <View style={styles.yearFilter}>
               <Text style={styles.filterLabel}>Year:</Text>
               <TouchableOpacity
                 style={styles.filterButton}
-                onPress={() => {
-                  const years = [2024, 2025, 2026];
-                  const currentIndex = years.indexOf(filterYear);
-                  const nextYear = years[(currentIndex + 1) % years.length];
-                  setFilterYear(nextYear);
-                }}
+                onPress={() => setShowYearPicker(true)}
               >
                 <Text style={styles.filterText}>{filterYear}</Text>
+                <Ionicons name="chevron-down" size={14} color="#6B7280" />
               </TouchableOpacity>
             </View>
           </View>
@@ -322,6 +317,63 @@ const TodoScreen = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Month Picker Modal */}
+      <Modal visible={showMonthPicker} animationType="fade" transparent={true}>
+        <TouchableOpacity 
+          style={styles.pickerOverlay} 
+          activeOpacity={1} 
+          onPress={() => setShowMonthPicker(false)}
+        >
+          <View style={styles.pickerContent}>
+            <Text style={styles.pickerTitle}>Select Month</Text>
+            <View style={styles.monthGrid}>
+              {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, index) => (
+                <TouchableOpacity
+                  key={m}
+                  style={[styles.pickerOption, filterMonth === index && styles.pickerOptionSelected]}
+                  onPress={() => {
+                    setFilterMonth(index);
+                    setShowMonthPicker(false);
+                  }}
+                >
+                  <Text style={[styles.pickerOptionText, filterMonth === index && styles.pickerOptionTextSelected]}>
+                    {m.substring(0, 3)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Year Picker Modal */}
+      <Modal visible={showYearPicker} animationType="fade" transparent={true}>
+        <TouchableOpacity 
+          style={styles.pickerOverlay} 
+          activeOpacity={1} 
+          onPress={() => setShowYearPicker(false)}
+        >
+          <View style={styles.pickerContent}>
+            <Text style={styles.pickerTitle}>Select Year</Text>
+            {[2024, 2025, 2026].map((y) => (
+              <TouchableOpacity
+                key={y}
+                style={[styles.pickerOptionRow, filterYear === y && styles.pickerOptionSelected]}
+                onPress={() => {
+                  setFilterYear(y);
+                  setShowYearPicker(false);
+                }}
+              >
+                <Text style={[styles.pickerOptionText, filterYear === y && styles.pickerOptionTextSelected]}>
+                  {y}
+                </Text>
+                {filterYear === y && <Ionicons name="checkmark" size={18} color="#3B82F6" />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -388,14 +440,73 @@ const styles = StyleSheet.create({
   filterButton: {
     backgroundColor: '#F3F4F6',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 8,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   filterText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     color: '#1F2937',
+  },
+  pickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pickerContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    width: '80%',
+    maxWidth: 320,
+  },
+  pickerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  monthGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  pickerOption: {
+    width: '30%',
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+  },
+  pickerOptionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+    marginBottom: 8,
+  },
+  pickerOptionSelected: {
+    backgroundColor: '#EBF5FF',
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
+  pickerOptionText: {
+    fontSize: 14,
+    color: '#4B5563',
+    fontWeight: '500',
+  },
+  pickerOptionTextSelected: {
+    color: '#3B82F6',
+    fontWeight: '700',
   },
   scrollView: {
     flex: 1,
