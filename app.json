@@ -24,6 +24,18 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "02a6ba3a-e81a-4454-b04d-4390ba7a27e6"
+      }
+    },
+    "owner": "abhi25",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/02a6ba3a-e81a-4454-b04d-4390ba7a27e6"
     }
   }
 }

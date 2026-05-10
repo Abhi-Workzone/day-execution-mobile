@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Modal } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { taskApi } from '../api';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
@@ -26,13 +27,21 @@ const TodoScreen = () => {
     deadline: ''
   });
 
-  useEffect(() => {
-    if (activeTab === 'active') {
-      fetchTasks();
-    } else {
-      fetchCompletedTasks();
-    }
-  }, [activeTab, filterMonth, filterYear]);
+  useFocusEffect(
+    useCallback(() => {
+      const start = Date.now();
+      console.log("[PERF] TODO_SCREEN FOCUS_FETCH START", { activeTab });
+      if (activeTab === 'active') {
+        fetchTasks().finally(() => {
+          console.log("[PERF] TODO_SCREEN FOCUS_FETCH END", Date.now() - start);
+        });
+      } else {
+        fetchCompletedTasks().finally(() => {
+          console.log("[PERF] TODO_SCREEN FOCUS_FETCH END", Date.now() - start);
+        });
+      }
+    }, [activeTab, filterMonth, filterYear])
+  );
 
   const fetchTasks = async () => {
     setLoading(true);

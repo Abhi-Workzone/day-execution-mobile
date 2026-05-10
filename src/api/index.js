@@ -3,12 +3,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const api = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_BASE_URL || 'https://day-execution-backend.onrender.com/api',
+  timeout: 10000, // 10 second timeout
 });
+
+let memoizedToken = null;
+
+export const setStoredToken = (token) => {
+  memoizedToken = token;
+};
 
 // Add token to requests
 api.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('token');
+  const token = memoizedToken || await AsyncStorage.getItem('token');
   if (token) {
+    memoizedToken = token;
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

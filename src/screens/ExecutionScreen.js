@@ -28,7 +28,11 @@ const ExecutionScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchPlan();
+      const start = Date.now();
+      console.log("[PERF] EXECUTION_SCREEN FOCUS_FETCH START", 0);
+      fetchPlan().finally(() => {
+        console.log("[PERF] EXECUTION_SCREEN FOCUS_FETCH END", Date.now() - start);
+      });
     }, [currentDate])
   );
 

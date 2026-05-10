@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { summaryApi } from '../api';
 import { format } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,9 +14,15 @@ const AnalyticsScreen = () => {
   const [summaries, setSummaries] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchSummaries();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const start = Date.now();
+      console.log("[PERF] ANALYTICS_SCREEN FOCUS_FETCH START", 0);
+      fetchSummaries().finally(() => {
+        console.log("[PERF] ANALYTICS_SCREEN FOCUS_FETCH END", Date.now() - start);
+      });
+    }, [])
+  );
 
   const fetchSummaries = async () => {
     try {

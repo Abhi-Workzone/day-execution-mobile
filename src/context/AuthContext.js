@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authApi } from '../api';
+import { authApi, setStoredToken } from '../api';
 
 const AuthContext = createContext();
 
@@ -10,16 +10,54 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = await AsyncStorage.getItem('token');
-      if (token) {
-        try {
-          const response = await authApi.getMe();
-          setUser(response.data);
-        } catch (error) {
-          await AsyncStorage.removeItem('token');
+      const MIN_SPLASH_TIME = 1000; // 1 second for branding
+      const start = Date.now();
+      console.log("[PERF] INIT_AUTH START", 0);
+      
+      const timerPromise = new Promise(resolve => setTimeout(resolve, MIN_SPLASH_TIME));
+
+      try {
+        // Fetch token and user in parallel with the minimum timer
+        console.log("[PERF] ASYNCSTORAGE FETCH START", Date.now() - start);
+        const [[token, storedUser]] = await Promise.all([
+          Promise.all([
+            AsyncStorage.getItem('token'),
+            AsyncStorage.getItem('user')
+          ]),
+          timerPromise
+        ]);
+        console.log("[PERF] ASYNCSTORAGE FETCH END", Date.now() - start);
+
+        if (token) {
+          setStoredToken(token);
+          if (storedUser) {
+            console.log("[PERF] OPTIMISTIC USER SET", Date.now() - start);
+            setUser(JSON.parse(storedUser));
+            setLoading(false); // Navigate immediately!
+          }
+
+          // Validate/Refresh in background
+          console.log("[PERF] BACKGROUND USER FETCH START", Date.now() - start);
+          authApi.getMe().then(response => {
+            console.log("[PERF] BACKGROUND USER FETCH SUCCESS", Date.now() - start);
+            setUser(response.data);
+            AsyncStorage.setItem('user', JSON.stringify(response.data));
+          }).catch(async (error) => {
+            console.log("[PERF] BACKGROUND USER FETCH ERROR", error.message);
+            if (error.response?.status === 401) {
+              await logout();
+            }
+          }).finally(() => {
+            setLoading(false);
+          });
+        } else {
+          setLoading(false);
         }
+      } catch (error) {
+        console.error("[PERF] INIT_AUTH FATAL ERROR", error);
+        setLoading(false);
       }
-      setLoading(false);
+      console.log("[PERF] INIT_AUTH METHOD END", Date.now() - start);
     };
     initAuth();
   }, []);
@@ -27,7 +65,11 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     const response = await authApi.login(credentials);
     const { token, ...userData } = response.data;
-    await AsyncStorage.setItem('token', token);
+    setStoredToken(token);
+    await Promise.all([
+      AsyncStorage.setItem('token', token),
+      AsyncStorage.setItem('user', JSON.stringify(userData))
+    ]);
     setUser(userData);
     return userData;
   };
@@ -35,13 +77,21 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     const response = await authApi.register(userData);
     const { token, ...newUserData } = response.data;
-    await AsyncStorage.setItem('token', token);
+    setStoredToken(token);
+    await Promise.all([
+      AsyncStorage.setItem('token', token),
+      AsyncStorage.setItem('user', JSON.stringify(newUserData))
+    ]);
     setUser(newUserData);
     return newUserData;
   };
 
   const logout = async () => {
-    await AsyncStorage.removeItem('token');
+    setStoredToken(null);
+    await Promise.all([
+      AsyncStorage.removeItem('token'),
+      AsyncStorage.removeItem('user')
+    ]);
     setUser(null);
   };
 

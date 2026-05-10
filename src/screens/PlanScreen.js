@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Modal, FlatList } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { planApi, taskApi } from '../api';
 import { Ionicons } from '@expo/vector-icons';
 import { format, addDays, startOfDay } from 'date-fns';
@@ -167,9 +168,15 @@ const PlanScreen = () => {
     return dateOptions;
   };
 
-  useEffect(() => {
-    fetchContext();
-  }, [selectedDate]);
+  useFocusEffect(
+    useCallback(() => {
+      const start = Date.now();
+      console.log("[PERF] PLAN_SCREEN FOCUS_FETCH START", 0);
+      fetchContext().finally(() => {
+        console.log("[PERF] PLAN_SCREEN FOCUS_FETCH END", Date.now() - start);
+      });
+    }, [selectedDate])
+  );
 
   const fetchContext = async () => {
     setLoading(true);

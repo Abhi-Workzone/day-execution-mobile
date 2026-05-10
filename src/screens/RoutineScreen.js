@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Modal } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { routineApi } from '../api';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
@@ -22,9 +23,15 @@ const RoutineScreen = () => {
 
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  useEffect(() => {
-    fetchRoutines();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const start = Date.now();
+      console.log("[PERF] ROUTINE_SCREEN FOCUS_FETCH START", 0);
+      fetchRoutines().finally(() => {
+        console.log("[PERF] ROUTINE_SCREEN FOCUS_FETCH END", Date.now() - start);
+      });
+    }, [])
+  );
 
   const fetchRoutines = async () => {
     try {
