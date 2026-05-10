@@ -16,11 +16,7 @@ const AnalyticsScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      const start = Date.now();
-      console.log("[PERF] ANALYTICS_SCREEN FOCUS_FETCH START", 0);
-      fetchSummaries().finally(() => {
-        console.log("[PERF] ANALYTICS_SCREEN FOCUS_FETCH END", Date.now() - start);
-      });
+      fetchSummaries();
     }, [])
   );
 

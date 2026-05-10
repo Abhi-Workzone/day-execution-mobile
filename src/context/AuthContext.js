@@ -11,14 +11,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       const MIN_SPLASH_TIME = 1000; // 1 second for branding
-      const start = Date.now();
-      console.log("[PERF] INIT_AUTH START", 0);
-      
       const timerPromise = new Promise(resolve => setTimeout(resolve, MIN_SPLASH_TIME));
 
       try {
-        // Fetch token and user in parallel with the minimum timer
-        console.log("[PERF] ASYNCSTORAGE FETCH START", Date.now() - start);
         const [[token, storedUser]] = await Promise.all([
           Promise.all([
             AsyncStorage.getItem('token'),
@@ -26,24 +21,18 @@ export const AuthProvider = ({ children }) => {
           ]),
           timerPromise
         ]);
-        console.log("[PERF] ASYNCSTORAGE FETCH END", Date.now() - start);
 
         if (token) {
           setStoredToken(token);
           if (storedUser) {
-            console.log("[PERF] OPTIMISTIC USER SET", Date.now() - start);
             setUser(JSON.parse(storedUser));
-            setLoading(false); // Navigate immediately!
+            setLoading(false);
           }
 
-          // Validate/Refresh in background
-          console.log("[PERF] BACKGROUND USER FETCH START", Date.now() - start);
           authApi.getMe().then(response => {
-            console.log("[PERF] BACKGROUND USER FETCH SUCCESS", Date.now() - start);
             setUser(response.data);
             AsyncStorage.setItem('user', JSON.stringify(response.data));
           }).catch(async (error) => {
-            console.log("[PERF] BACKGROUND USER FETCH ERROR", error.message);
             if (error.response?.status === 401) {
               await logout();
             }
@@ -54,10 +43,8 @@ export const AuthProvider = ({ children }) => {
           setLoading(false);
         }
       } catch (error) {
-        console.error("[PERF] INIT_AUTH FATAL ERROR", error);
         setLoading(false);
       }
-      console.log("[PERF] INIT_AUTH METHOD END", Date.now() - start);
     };
     initAuth();
   }, []);

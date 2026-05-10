@@ -10,6 +10,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import Loading from '../components/Loading';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { showToast } from '../utils/toast';
 
 const PlanScreen = () => {
   const [loading, setLoading] = useState(true);
@@ -96,11 +97,11 @@ const PlanScreen = () => {
   const openScheduleModal = (task) => {
     setSchedulingTask({
       ...task,
-      plannedStart: '09:00',
-      plannedEnd: calculateEndTime('09:00', task.estimatedTime || 30)
+      plannedStart: '23:00',
+      plannedEnd: calculateEndTime('23:00', task.estimatedTime || 30)
     });
-    setSelectedStartTime('09:00');
-    setSelectedEndTime(calculateEndTime('09:00', task.estimatedTime || 30));
+    setSelectedStartTime('23:00');
+    setSelectedEndTime(calculateEndTime('23:00', task.estimatedTime || 30));
     setShowModal(true);
   };
 
@@ -170,11 +171,7 @@ const PlanScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      const start = Date.now();
-      console.log("[PERF] PLAN_SCREEN FOCUS_FETCH START", 0);
-      fetchContext().finally(() => {
-        console.log("[PERF] PLAN_SCREEN FOCUS_FETCH END", Date.now() - start);
-      });
+      fetchContext();
     }, [selectedDate])
   );
 
@@ -294,10 +291,10 @@ const PlanScreen = () => {
         plannedTotalTime
       });
 
-      Alert.alert('Success', 'Plan saved successfully!');
+      showToast.success('Success', 'Plan saved successfully! 🚀');
     } catch (error) {
       console.error('Error saving plan:', error);
-      Alert.alert('Error', 'Failed to save plan');
+      showToast.error('Error', 'Failed to save plan');
     } finally {
       setSaving(false);
     }

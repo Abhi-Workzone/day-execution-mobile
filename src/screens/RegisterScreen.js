@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { showToast } from '../utils/toast';
 import { authApi } from '../api';
 
 const RegisterScreen = ({ navigation }) => {
@@ -11,17 +12,17 @@ const RegisterScreen = ({ navigation }) => {
 
   const handleRegister = async () => {
     if (!name || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showToast.error('Required', 'Please fill in all fields');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      showToast.error('Mismatch', 'Passwords do not match');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      showToast.info('Security', 'Password must be at least 6 characters');
       return;
     }
 
@@ -29,13 +30,13 @@ const RegisterScreen = ({ navigation }) => {
     try {
       const response = await authApi.register({ name, email, password });
       if (response.data.success) {
-        Alert.alert('Success', 'Account created successfully');
+        showToast.success('Welcome! 🎉', 'Account created successfully');
         navigation.replace('Login');
       } else {
-        Alert.alert('Error', response.data.message || 'Registration failed');
+        showToast.error('Failed', response.data.message || 'Registration failed');
       }
     } catch (error) {
-      Alert.alert('Error', 'Registration failed. Please try again.');
+      showToast.error('Error', 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

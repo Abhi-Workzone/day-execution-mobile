@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { showToast } from '../utils/toast';
 import { useAuth } from '../context/AuthContext';
 
 const LoginScreen = ({ navigation }) => {
@@ -11,7 +12,7 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showToast.error('Required', 'Please fill in all fields');
       return;
     }
 
@@ -21,7 +22,7 @@ const LoginScreen = ({ navigation }) => {
       // AppNavigator will automatically switch to "Main" because "user" is now set
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Login failed. Please check your credentials.');
+      showToast.error('Login Failed', 'Please check your credentials.');
     } finally {
       setLoading(false);
     }

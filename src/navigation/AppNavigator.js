@@ -14,13 +14,9 @@ const Stack = createStackNavigator();
 const AppNavigator = () => {
   const { user, loading } = useAuth();
 
-  console.log("[PERF] APPNAVIGATOR RENDER", { loading, hasUser: !!user, time: Date.now() - global.startupTime });
-
   if (loading) {
     return <SplashScreen />;
   }
-
-  console.log("[PERF] APPNAVIGATOR HIDING SPLASH", Date.now() - global.startupTime);
 
   return (
     <NavigationContainer>

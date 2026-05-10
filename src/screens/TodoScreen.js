@@ -8,6 +8,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Loading from '../components/Loading';
+import { showToast } from '../utils/toast';
 
 const TodoScreen = () => {
   const [tasks, setTasks] = useState([]);
@@ -29,16 +30,10 @@ const TodoScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      const start = Date.now();
-      console.log("[PERF] TODO_SCREEN FOCUS_FETCH START", { activeTab });
       if (activeTab === 'active') {
-        fetchTasks().finally(() => {
-          console.log("[PERF] TODO_SCREEN FOCUS_FETCH END", Date.now() - start);
-        });
+        fetchTasks();
       } else {
-        fetchCompletedTasks().finally(() => {
-          console.log("[PERF] TODO_SCREEN FOCUS_FETCH END", Date.now() - start);
-        });
+        fetchCompletedTasks();
       }
     }, [activeTab, filterMonth, filterYear])
   );
@@ -76,9 +71,10 @@ const TodoScreen = () => {
       }
       handleCloseModal();
       fetchTasks();
+      showToast.success('Success', `Task ${editingId ? 'updated' : 'created'}! ✅`);
     } catch (error) {
       console.error('Error saving task:', error);
-      Alert.alert('Error', 'Failed to save task');
+      showToast.error('Error', 'Failed to save task');
     }
   };
 
@@ -113,9 +109,10 @@ const TodoScreen = () => {
             try {
               await taskApi.deleteTask(id);
               fetchTasks();
+              showToast.success('Deleted', 'Task removed from pool');
             } catch (error) {
               console.error('Error deleting task:', error);
-              Alert.alert('Error', 'Failed to delete task');
+              showToast.error('Error', 'Failed to delete task');
             }
           }
         }

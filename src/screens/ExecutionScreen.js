@@ -10,6 +10,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import Loading from '../components/Loading';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { showToast } from '../utils/toast';
 
 const ExecutionScreen = () => {
   const [loading, setLoading] = useState(true);
@@ -28,11 +29,7 @@ const ExecutionScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      const start = Date.now();
-      console.log("[PERF] EXECUTION_SCREEN FOCUS_FETCH START", 0);
-      fetchPlan().finally(() => {
-        console.log("[PERF] EXECUTION_SCREEN FOCUS_FETCH END", Date.now() - start);
-      });
+      fetchPlan(true); // Initial load shows full screen loading
     }, [currentDate])
   );
 
@@ -60,8 +57,8 @@ const ExecutionScreen = () => {
     lastScrollY.current = currentScrollY;
   };
 
-  const fetchPlan = async () => {
-    setLoading(true);
+  const fetchPlan = async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     try {
       const dateStr = currentDate.toISOString().split('T')[0];
       const response = await planApi.getTodayPlan(dateStr);
@@ -87,7 +84,7 @@ const ExecutionScreen = () => {
     } catch (error) {
       console.error('Error fetching plan:', error);
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
@@ -131,7 +128,7 @@ const ExecutionScreen = () => {
       };
 
       await planApi.updateExecution(plan._id, taskId, data);
-      await fetchPlan();
+      await fetchPlan(false); // Background update, no full screen loading
     } catch (error) {
       console.error('Error updating execution:', error);
     } finally {
@@ -154,10 +151,10 @@ const ExecutionScreen = () => {
         date: currentDate,
         notes: 'End of day review.'
       });
-      Alert.alert('Success', 'Day finalized successfully!');
+      showToast.success('Success', 'Day finalized successfully! 🏁');
     } catch (error) {
       console.error('Error finalizing day:', error);
-      Alert.alert('Error', 'Failed to finalize day');
+      showToast.error('Error', 'Failed to finalize day');
     } finally {
       setLoading(false);
     }
@@ -213,10 +210,16 @@ const ExecutionScreen = () => {
 
         {plan?.tasks?.length > 0 ? (
           <View style={styles.tasksContainer}>
+            <View style={styles.verticalLine} />
             {plan.tasks.map((task, idx) => (
               <Card key={task._id || idx} style={styles.taskCard}>
                 <View style={styles.taskContent}>
-                  <View style={styles.timelineDot} />
+                  <View style={[
+                    styles.timelineDot,
+                    task.status === 'done' ? styles.dotDone : 
+                    task.status === 'missed' ? styles.dotMissed : 
+                    task.status === 'partial' ? styles.dotPartial : null
+                  ]} />
                   <View style={styles.taskInfo}>
                     <View style={styles.taskHeader}>
                       <View style={styles.taskLabels}>
@@ -248,7 +251,7 @@ const ExecutionScreen = () => {
                           ]}
                         >
                           <Ionicons
-                            name={getStatusIcon(task.status === 'done' ? 'done' : 'radio-button-off')}
+                            name={getStatusIcon('done')}
                             size={20}
                             color={task.status === 'done' ? '#10B981' : '#D1D5DB'}
                           />
@@ -263,7 +266,7 @@ const ExecutionScreen = () => {
                           ]}
                         >
                           <Ionicons
-                            name={getStatusIcon(task.status === 'partial' ? 'partial' : 'radio-button-off')}
+                            name={getStatusIcon('partial')}
                             size={20}
                             color={task.status === 'partial' ? '#F59E0B' : '#D1D5DB'}
                           />
@@ -278,7 +281,7 @@ const ExecutionScreen = () => {
                           ]}
                         >
                           <Ionicons
-                            name={getStatusIcon(task.status === 'missed' ? 'missed' : 'radio-button-off')}
+                            name={getStatusIcon('missed')}
                             size={20}
                             color={task.status === 'missed' ? '#EF4444' : '#D1D5DB'}
                           />
@@ -436,9 +439,21 @@ const styles = StyleSheet.create({
   },
   tasksContainer: {
     paddingBottom: 20,
+    paddingLeft: 24, // Space for the vertical line
+    position: 'relative',
+  },
+  verticalLine: {
+    position: 'absolute',
+    left: 8,
+    top: 24,
+    bottom: 24,
+    width: 2,
+    backgroundColor: '#E5E7EB',
+    zIndex: 0,
   },
   taskCard: {
     marginBottom: 12,
+    marginLeft: 12,
     position: 'relative',
   },
   taskContent: {
@@ -447,18 +462,22 @@ const styles = StyleSheet.create({
   },
   timelineDot: {
     position: 'absolute',
-    left: -8,
-    top: 20,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#3B82F6',
+    left: -50, // Perfectly centered on the vertical line (8px) relative to card margin
+    top: 24,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#FFFFFF',
     borderWidth: 3,
-    borderColor: '#FFFFFF',
+    borderColor: '#D1D5DB',
+    zIndex: 2,
   },
+  dotDone: { borderColor: '#10B981', backgroundColor: '#10B981' },
+  dotMissed: { borderColor: '#EF4444', backgroundColor: '#EF4444' },
+  dotPartial: { borderColor: '#F59E0B', backgroundColor: '#F59E0B' },
   taskInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 0,
   },
   taskHeader: {
     marginBottom: 4,
@@ -483,6 +502,13 @@ const styles = StyleSheet.create({
   taskTitleCompleted: { textDecorationLine: 'line-through', color: '#6B7280' },
   statusButtons: { flexDirection: 'row', gap: 6 },
   statusButton: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  statusButtonActive: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   fab: {
     position: 'absolute',
     bottom: 30,
@@ -535,13 +561,25 @@ const styles = StyleSheet.create({
     right: 10,
     zIndex: 1,
   },
-  modalContent: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, width: '100%', maxWidth: 300 },
+  modalContent: { 
+    backgroundColor: '#FFFFFF', 
+    borderRadius: 16, 
+    padding: 24, 
+    width: '90%', 
+    maxWidth: 340,
+    elevation: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+  },
   modalHeader: { alignItems: 'center', marginBottom: 20 },
   modalIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#1F2937', textAlign: 'center', marginBottom: 4 },
-  modalSubtitle: { fontSize: 12, color: '#6B7280', textAlign: 'center' },
+  modalSubtitle: { fontSize: 13, color: '#6B7280', textAlign: 'center', lineHeight: 18 },
   reasonInput: { marginBottom: 20 },
   modalButtons: { flexDirection: 'row', gap: 12 },
+  modalButton: { flex: 1 },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',

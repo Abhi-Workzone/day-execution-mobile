@@ -8,6 +8,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Loading from '../components/Loading';
+import { showToast } from '../utils/toast';
 
 const RoutineScreen = () => {
   const [routines, setRoutines] = useState([]);
@@ -25,11 +26,7 @@ const RoutineScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      const start = Date.now();
-      console.log("[PERF] ROUTINE_SCREEN FOCUS_FETCH START", 0);
-      fetchRoutines().finally(() => {
-        console.log("[PERF] ROUTINE_SCREEN FOCUS_FETCH END", Date.now() - start);
-      });
+      fetchRoutines();
     }, [])
   );
 
@@ -56,7 +53,7 @@ const RoutineScreen = () => {
 
   const handleCreate = async () => {
     if (newRoutine.daysOfWeek.length === 0) {
-      Alert.alert('Error', 'Please select at least one day');
+      showToast.info('Selection Required', 'Please select at least one day');
       return;
     }
     
@@ -68,9 +65,10 @@ const RoutineScreen = () => {
       }
       handleCloseModal();
       fetchRoutines();
+      showToast.success('Success', `Routine ${editingId ? 'updated' : 'created'}! ✨`);
     } catch (error) {
       console.error('Error saving routine:', error);
-      Alert.alert('Error', 'Failed to save routine');
+      showToast.error('Error', 'Failed to save routine');
     }
   };
 
@@ -104,9 +102,10 @@ const RoutineScreen = () => {
             try {
               await routineApi.deleteRoutine(id);
               fetchRoutines();
+              showToast.success('Deleted', 'Routine removed from pool');
             } catch (error) {
               console.error('Error deleting routine:', error);
-              Alert.alert('Error', 'Failed to delete routine');
+              showToast.error('Error', 'Failed to delete routine');
             }
           }
         }
