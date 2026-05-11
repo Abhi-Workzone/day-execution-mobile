@@ -191,7 +191,10 @@ const PlanScreen = () => {
           type: t.type,
           plannedStart: t.plannedStart,
           plannedEnd: t.plannedEnd,
-          duration: t.plannedDuration || 0
+          duration: t.plannedDuration || 0,
+          status: t.status || 'pending',
+          actualTime: t.actualTime || 0,
+          reason: t.reason || ''
         }));
         setSelectedTasks(existingTasks);
       } else {
@@ -280,7 +283,9 @@ const PlanScreen = () => {
         plannedStart: t.plannedStart,
         plannedEnd: t.plannedEnd,
         plannedDuration: t.duration,
-        status: 'pending'
+        status: t.status || 'pending',
+        actualTime: t.actualTime || 0,
+        reason: t.reason || ''
       }));
 
       const plannedTotalTime = selectedTasks.reduce((acc, t) => acc + (t.duration || 0), 0);
