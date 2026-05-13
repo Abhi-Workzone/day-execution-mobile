@@ -291,7 +291,7 @@ const PlanScreen = () => {
       const plannedTotalTime = selectedTasks.reduce((acc, t) => acc + (t.duration || 0), 0);
 
       await planApi.savePlan({
-        date: selectedDate,
+        date: format(selectedDate, 'yyyy-MM-dd'),
         tasks: tasksToSave,
         plannedTotalTime
       });
